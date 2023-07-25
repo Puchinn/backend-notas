@@ -2,7 +2,7 @@
   "name": "backend_notas",
   "packageManager": "yarn@3.2.3",
   "scripts": {
-    "start": "node app.js"
+    "start": "node index.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
