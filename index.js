@@ -1,41 +1,54 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const app = express();
-
 const port = process.env.PORT || 3001;
+const Nota = require("./models");
 
 app.use(express.json());
 app.use(cors());
 app.use(express.static("dist"));
 
-let notes = [
-  {
-    id: 1,
-    content: "HTML is easy",
-    date: "2019-05-30T17:30:31.098Z",
-    important: true,
-  },
-  {
-    id: 2,
-    content: "Browser can execute only Javascript",
-    date: "2019-05-30T18:39:34.091Z",
-    important: false,
-  },
-  {
-    id: 3,
-    content: "GET and POST are the most important methods of HTTP protocol",
-    date: "2019-05-30T19:20:14.298Z",
-    important: true,
-  },
-];
+app.get("/api/notas", (req, res) => {
+  Nota.find({}).then((notas) => {
+    res.json(notas);
+  });
+});
 
-const generarId = () => {
-  const maxId = notes[notes.length - 1] ? notes[notes.length - 1].id : 0;
-  return maxId + 1;
+app.post("/api/notas", (req, res, next) => {
+  const nota = req.body;
+
+  const nuevaNota = new Nota({
+    content: nota.content,
+    date: new Date(),
+    important: nota.important || false,
+  });
+
+  nuevaNota
+    .save()
+    .then((nota) => res.json(nota))
+    .catch((error) => {
+      next(error);
+    });
+});
+
+app.get("/api/notas/:id", (req, res, next) => {
+  const id = req.params.id;
+  Nota.findById(id)
+    .then((nota) => res.json(nota))
+    .catch((err) => next(err));
+});
+
+const errorHandler = (err, req, res, next) => {
+  console.log(err);
+  if (err.name === "CastError") {
+    return res.status(400).send({ error: "mal formato de id" });
+  } else if (err.name === "ValidationError") {
+    return res.status(400).send({ error: err.message });
+  }
 };
 
-app.get("/api/notas", (req, res) => {
-  res.json(notes);
-});
+app.use(errorHandler);
 
 app.listen(port);
